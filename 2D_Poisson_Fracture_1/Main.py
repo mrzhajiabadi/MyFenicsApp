@@ -1,5 +1,6 @@
 import json
 from dolfin import *
+from math import *
 #from multiphenics import *
 
 # Mesh
@@ -41,7 +42,7 @@ class Subdomain_Property(UserExpression):
         values[0] =subdomain_materials[subdomains[ufc_cell.index]][self.property_name]
 
 k=Subdomain_Property(subdomains,subdomain_materials,'Permeability',degree=0) 
-kf=1.0   
+kf=1.0 
         
 print("Creating function spaces.")
 V = FunctionSpace(mesh, "CG", 1)
@@ -58,15 +59,16 @@ dS = Measure("dS")(subdomain_data=boundaries)
 dS = dS(id_interface)
 n = FacetNormal(mesh)
 
-m = FacetNormal(mesh) # m sould be Facet Tangent  
-
 print("Defining bilinear form a(h,dh).")
 
-gradTh=inner(grad(h("+")),m("+"))
-gradTdh=inner(grad(dh("+")),m("+"))
+gradn_h=inner(grad(h("+")),n("+"))*n("+")
+gradn_dh=inner(grad(dh("+")),n("+"))*n("+")
+
+gradt_h=grad(h("+"))-gradn_h
+gradt_dh=grad(dh("+"))-gradn_dh
 
 
-b = kf*gradTh*gradTdh*dS
+b = kf*inner(gradt_h,gradt_dh)*dS
 a = k*inner(grad(h),grad(dh))*dx+b
 
 print("Defining linear form L(v).")
